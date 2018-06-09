@@ -39,9 +39,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
-#include "string.h"
 
 /* USER CODE BEGIN Includes */
+
+#include "string.h"
 
 /* USER CODE END Includes */
 
@@ -51,9 +52,9 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+#define MEM_SIZE 32000
 uint8_t payload[256];
-int num = 420;
+//int num = 420;
 
 /* USER CODE END PV */
 
@@ -66,7 +67,10 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
-static void request_pkt(uint8_t *data,int adress,int size);
+static void request_pkt(uint8_t *data,int address,int size);
+static void format_pkt(uint8_t *data, uint8_t *out, uint8_t txcnt);
+static void send_mem(void);
+static void send_pkt(uint8_t *data);
 
 /* USER CODE END PFP */
 
@@ -108,10 +112,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   //  HAL_UART_Transmit(&huart2, "boi\n",sizeof("boi\n"), 100);
-
-  memset((char*)payload,'\n',sizeof(payload));
-        request_pkt(payload,0,32);
-        HAL_UART_Transmit(&huart2, payload,33, 100);
+  send_mem();
+  // request_pkt(payload,0,32);
+  // HAL_UART_Transmit(&huart2, payload,33, 100);
 
   /* USER CODE END 2 */
 
@@ -119,7 +122,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
 
   /* USER CODE END WHILE */
   //HAL_UART_Receive(&huart2, num, sizeof(num), 100000);
@@ -268,7 +270,7 @@ static void MX_GPIO_Init(void)
 
 
 static void request_pkt(uint8_t *data,int address,int size){
-  uint8_t out[sizeof(int)];
+  uint8_t out[4];
   memset((char*)out,'\n',sizeof(out));
 
   sprintf((char*)out,"%d\n",address);//format int to char
@@ -282,6 +284,62 @@ static void request_pkt(uint8_t *data,int address,int size){
   HAL_UART_Receive(&huart2, data,size, 1000);
 
   return;
+}
+
+static void send_mem(void){
+
+  int n=0;
+  int size=256;
+  int txcnt=0;
+  uint8_t info[256];
+  uint8_t out_pkt[258];
+
+  while (n<MEM_SIZE){
+
+    if(n+256>MEM_SIZE) size=MEM_SIZE-n+256;
+
+    request_pkt(info,n,size);
+
+    format_pkt(info,out_pkt,txcnt);
+
+    send_pkt(out_pkt);
+
+    txcnt++;
+    if(txcnt>7)txcnt=0;
+    n=n+256;
+
+    HAL_Delay(100);
+
+  }
+
+  return;
+
+}
+
+static void send_pkt(uint8_t *out){
+
+  HAL_UART_Transmit(&huart2, out,sizeof(out), 100);
+
+  return;
+}
+
+static void format_pkt(uint8_t *data, uint8_t *out, uint8_t txcnt){
+
+  uint8_t rxcnt=txcnt+1;
+  uint8_t i;
+
+  memset((char*)payload,'\n',sizeof(payload));
+
+  if (rxcnt>7) rxcnt=0;
+  
+  out[0]=txcnt;
+  out[1]=rxcnt;
+  for(i=0;i<sizeof(out);i++){
+    out[i+2]=data[i];
+  }
+
+  return;
+
 }
 
 /* USER CODE END 4 */

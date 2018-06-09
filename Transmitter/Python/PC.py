@@ -1,6 +1,6 @@
 import serial
 
-st = serial.Serial('COM3',115200, timeout=5,parity=serial.PARITY_NONE, rtscts=0)
+st = serial.Serial('COM6',115200, timeout=5,parity=serial.PARITY_NONE, rtscts=0)
 print("preparing to read file")
 open("rom.txt", 'r').close()
 rom=open("rom.txt","r")
@@ -103,7 +103,7 @@ pkt=memory[address]
 for n in range(1,size):
     pkt=pkt+memory[address+n]
 
-print(pkt)
+#print(pkt)
 #send pkt
 st.write(pkt)
 
