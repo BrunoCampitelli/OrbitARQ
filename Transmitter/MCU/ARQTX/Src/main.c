@@ -39,6 +39,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
+#include "string.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -51,7 +52,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
-char out[100];
+uint8_t payload[256];
 int num = 420;
 
 /* USER CODE END PV */
@@ -64,6 +65,8 @@ static void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+
+static void request_pkt(uint8_t *data,int adress,int size);
 
 /* USER CODE END PFP */
 
@@ -106,7 +109,10 @@ int main(void)
 
   //  HAL_UART_Transmit(&huart2, "boi\n",sizeof("boi\n"), 100);
 
-  sprintf(out,"%d\n",num);
+  memset((char*)payload,'\n',sizeof(payload));
+        request_pkt(payload,0,32);
+        HAL_UART_Transmit(&huart2, payload,33, 100);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,10 +120,11 @@ int main(void)
   while (1)
   {
 
+
   /* USER CODE END WHILE */
   //HAL_UART_Receive(&huart2, num, sizeof(num), 100000);
   //num[0]++;
-  HAL_UART_Transmit(&huart2, out,sizeof(num), 100);
+//  HAL_UART_Transmit(&huart2, out,sizeof(num), 100);
   /* USER CODE BEGIN 3 */
 
   }
@@ -258,6 +265,24 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+
+static void request_pkt(uint8_t *data,int address,int size){
+  uint8_t out[sizeof(int)];
+  memset((char*)out,'\n',sizeof(out));
+
+  sprintf((char*)out,"%d\n",address);//format int to char
+  HAL_UART_Transmit(&huart2, out,sizeof(address), 100);
+  //memset((char*)out,'\n',sizeof(out));
+
+  sprintf((char*)out,"%d\n",size);
+  HAL_UART_Transmit(&huart2, out,sizeof(size), 100);
+
+
+  HAL_UART_Receive(&huart2, data,size, 1000);
+
+  return;
+}
 
 /* USER CODE END 4 */
 
