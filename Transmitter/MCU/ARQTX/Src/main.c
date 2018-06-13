@@ -1,4 +1,3 @@
-
 /**
   ******************************************************************************
   * @file           : main.c
@@ -110,8 +109,8 @@ int main(void)
   //  HAL_UART_Transmit(&huart2, "boi\n",sizeof("boi\n"), 100);
 
   memset((char*)payload,'\n',sizeof(payload));
-        request_pkt(payload,0,32);
-        HAL_UART_Transmit(&huart2, payload,33, 100);
+  request_pkt(payload,0,32);
+  HAL_UART_Transmit(&huart2, payload,33, 100);
 
   /* USER CODE END 2 */
 
@@ -273,7 +272,6 @@ static void request_pkt(uint8_t *data,int address,int size){
 
   sprintf((char*)out,"%d\n",address);//format int to char
   HAL_UART_Transmit(&huart2, out,sizeof(address), 100);
-  //memset((char*)out,'\n',sizeof(out));
 
   sprintf((char*)out,"%d\n",size);
   HAL_UART_Transmit(&huart2, out,sizeof(size), 100);
