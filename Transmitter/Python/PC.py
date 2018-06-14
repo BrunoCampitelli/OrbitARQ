@@ -1,6 +1,15 @@
+# TODO:
+
+# make single uart command
+# add read/write functionality
+#     for writing to memory, first modify the memory instantiated then re-write 
+#     it to the file
+# make settings for text file and serial port at the beginning clear
+# make infinite loop so you dont have to run just once every time
+
 import serial
 
-st = serial.Serial('COM6',115200, timeout=5,parity=serial.PARITY_NONE, rtscts=0)
+st = serial.Serial('COM3',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
 print("preparing to read file")
 open("rom.txt", 'r').close()
 rom=open("rom.txt","r")
@@ -54,61 +63,46 @@ print("file read")
 ##########################################################################TEST##########################################################################
 ##########################################################################TEST##########################################################################
 
-out=-1
-# while 1:
-print("waiting for address")
+while 1:
+    cmd='\n'
+    cmd=st.readline()#wait for command
 
-#wait for address
-address=-1
-while (address<0):
-    address=st.readline()
+    if (cmd[0]=='r'):
+        address=cmd[1]
+        address=address.decode("utf-8")
+        # address=address.strip('\n')
+        # address=address.strip(u'\x00')
+        address=int(address)
+        size=cmd[2]
+        size=size.decode("utf-8")
+        # size=size.strip('\n')
+        # size=size.strip(u'\x00')
+        size=int(size)
 
-size=st.readline()
-    # print("address1:"+address)
+        #setup pkt to be sent    
+        pkt=memory[address]
+        for n in range(1,size):
+            pkt=pkt+memory[address+n]
+        
+        #send pkt
+        st.write(pkt)
 
-address=address.decode("utf-8")
-# print("address2:"+address)
-address=address.strip('\n')
-address=address.strip(u'\x00')
-# print("address3:"+address)
-address=int(address)
-size=st.readline()
-size=size.decode("utf-8")
-size=size.strip('\n')
-size=size.strip(u'\x00')
-size=int(size)
-    # print("address:"+size)
+        print(st.read(size+2))#check what stm received
 
-# address = out
-# out = -1
-# print("Requested address:"+str(address))
 
-#wait for packet s-ize
-# while (out<0):
-#     out=st.readline()
-#     print("size:"+out)
-#     out=out.decode("utf-8")
-#     print("size:"+out)
-#     out=out.strip('\n')
-#     out=out.strip(u'\x00')
-#     print("size:"+out)
-#     out=int(out)
+    elif(cmd[0]=='w'):
+        address=cmd[1] #get address to be written to
+        address=address.decode("utf-8")
+        address=int(address)
+        
+        for n in range(2,len(cmd)-2):
+            memory[address+n-2]=cmd[n]#modify instantiated memory
+        
+        open("mem.txt", 'w').close()#update physical memory
+        txtmem=open("mem.txt","w")
+        txtmem.write(memory)
+        txtmem.close()
+        
+    else:
+        print("invalid command\n")
 
-# size = out
-# out = -1
-# print("Requested size:"+str(size))
-
-#setup pkt to be sent
-pkt=memory[address]
-for n in range(1,size):
-    pkt=pkt+memory[address+n]
-
-#print(pkt)
-#send pkt
-st.write(pkt)
-
-# print("checking for output")
-print(st.read(size+2))
-
-    # while 1:
-    #     pass
