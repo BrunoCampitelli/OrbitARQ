@@ -1,83 +1,26 @@
-# TODO:
-
-# make single uart command
-# add read/write functionality
-#     for writing to memory, first modify the memory instantiated then re-write 
-#     it to the file
-# make settings for text file and serial port at the beginning clear
-# make infinite loop so you dont have to run just once every time
-
 import serial
 
+memfile="rwmem.txt" #change the file being used here
 st = serial.Serial('COM3',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
 print("preparing to read file")
-open("rom.txt", 'r').close()
-rom=open("rom.txt","r")
+open(memfile, 'r').close()
+rom=open(memfile,"r")
 memory=list(rom.read())
 rom.close()
 print("file read")
 
-##########################################################################TEST##########################################################################
-##########################################################################TEST##########################################################################
-##########################################################################TEST##########################################################################
-# address=0
-# size=256
-#
-# print("Requested address:"+str(address))
-# print("Requested size:"+str(size))
-# #setup pkt to be sent
-# pkt=memory[address]
-# for n in range(1,size-1):
-#     pkt=pkt+memory[address+n]
-#
-# print(pkt)
-#
-# address=1853
-# size=144
-#
-# print("Requested address:"+str(address))
-# print("Requested size:"+str(size))
-# #setup pkt to be sent
-# pkt=memory[address]
-# for n in range(1,size-1):
-#     pkt=pkt+memory[address+n]
-#
-# print(pkt)
-#
-# address=9756
-# size=13
-#
-#
-# print("Requested address:"+str(address))
-# print("Requested size:"+str(size))
-# #setup pkt to be sent
-# pkt=memory[address]
-# for n in range(1,size):
-#     pkt=pkt+memory[address+n]
-#
-# print(pkt)
-#
-# while 1:
-#     pass
-##########################################################################TEST##########################################################################
-##########################################################################TEST##########################################################################
-##########################################################################TEST##########################################################################
-
 while 1:
-    cmd='\n'
-    cmd=st.readline()#wait for command
+    print("waiting for command")
+    cmd=None
+    st.reset_input_buffer()
+    cmd=st.read(1)#wait for command
 
     if (cmd[0]=='r'):
-        address=cmd[1]
-        address=address.decode("utf-8")
-        # address=address.strip('\n')
-        # address=address.strip(u'\x00')
-        address=int(address)
-        size=cmd[2]
-        size=size.decode("utf-8")
-        # size=size.strip('\n')
-        # size=size.strip(u'\x00')
-        size=int(size)
+        print("read received")
+        cmd=st.read(3)
+        address=ord(cmd[0])*256+ord(cmd[1])
+        size=ord(cmd[2])
+        if (size==0): size = 256
 
         #setup pkt to be sent    
         pkt=memory[address]
@@ -87,21 +30,32 @@ while 1:
         #send pkt
         st.write(pkt)
 
-        print(st.read(size+2))#check what stm received
-
 
     elif(cmd[0]=='w'):
-        address=cmd[1] #get address to be written to
-        address=address.decode("utf-8")
-        address=int(address)
+        print("write received")
+        cmd=st.read(3)
+        address=ord(cmd[0])*256+ord(cmd[1])
+        size=ord(cmd[2])
+        if (size==0): size = 256
+        cmd=st.read(size)
         
-        for n in range(2,len(cmd)-2):
-            memory[address+n-2]=cmd[n]#modify instantiated memory
+        for n in range(0,len(cmd)-1):
+            memory[address+n]=cmd[n]#modify instantiated memory
         
-        open("mem.txt", 'w').close()#update physical memory
-        txtmem=open("mem.txt","w")
-        txtmem.write(memory)
+
+        upstr=''.join(memory)
+        open(memfile, 'r+').close()#update physical memory
+        txtmem=open(memfile,"r+")
+        txtmem.write(upstr)
         txtmem.close()
+
+    elif(cmd[0]=='p'):#use this command to print to console directly, for debud purposes
+        print("print received")
+        cmd=st.read(1)
+        size=ord(cmd[0])
+        if (size==0): size = 256
+        cmd=st.read(size)
+        print(cmd)
         
     else:
         print("invalid command\n")
