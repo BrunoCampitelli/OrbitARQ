@@ -40,6 +40,7 @@
 #include "string.h"
 #include "stm32f4xx_hal.h"
 #include "pymem.h"
+#include "ax25.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -54,7 +55,8 @@ UART_HandleTypeDef huart2;
 /* Private variables ---------------------------------------------------------*/
 #define MEM_SIZE 32000
 uint8_t payload[]="HELLO WORLD";
-uint8_t recv_buffer[30];
+uint8_t outbuff[255];
+uint8_t size[1];
 
 /* USER CODE END PV */
 
@@ -110,17 +112,20 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  //  HAL_UART_Transmit(&huart2, "boi\n",sizeof("boi\n"), 100);
-  //send_mem();
-  // request_pkt(payload,32000,33);
-  // request_pkt(payload,0,32);
-  // HAL_UART_Transmit(&huart2, payload,33, 100);
-  //sprintf((char*)payload,"B0SSPLZHELP THIS NIDS 2 WERK");
+
+
+  ax25_send(outbuff, payload,sizeof(payload),1);
+  size[0]=sizeof(outbuff);
+  HAL_UART_Transmit(&huart2,size,1,100);
+  HAL_Delay(100);
+  HAL_UART_Transmit(&huart2,outbuff,sizeof(outbuff),100);
+
+/*  PACKET TESTING
   write_pkt(payload,10,sizeof(payload));
   request_pkt(recv_buffer,5,sizeof(recv_buffer));
   HAL_Delay(100);
   ser_print(recv_buffer,sizeof(recv_buffer));
-
+*/
   /* USER CODE END 2 */
 
   /* Infinite loop */
