@@ -1,6 +1,7 @@
 import serial
 
 memfile="serout.txt" #change the file being used here
+#st = serial.Serial('COM3',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
 st = serial.Serial('COM3',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
 # print("preparing to read file")
 # open(memfile, 'r').close()
@@ -27,13 +28,16 @@ while 1:
         hexout[n]=hex(ser[n])
         binout[n]='{0:08b}'.format(ser[n])
     
-    hexoutf=' '.join(hexout)
-    binoutf=' '.join(binout)
+    hexoutf=' '.join(hexout)#hex out
+    binoutf=' '.join(binout)#binary out
+    binoutns=''.join(binout)#binary no space
     open(memfile, 'w').close()
     txtmem=open(memfile,"w")
     txtmem.write(hexoutf)
     txtmem.write('\n')
     txtmem.write(binoutf)
+    txtmem.write('\n')
+    txtmem.write(binoutns)
     txtmem.close()
 
     # if (cmd[0]=='r'):
