@@ -81,3 +81,33 @@ void ser_print(uint8_t *data, int size){
   return;
 
 }
+
+/**
+  * @brief  Generic python command interface
+  * @param  cmd the command to be sent to the python script
+  * @param  data the buffer with the data that needs to be printed
+  * @param  Size Amount of data to be sent
+  * @retval none
+  */
+void py_cmd(char cmd, uint8_t *data, int size){
+
+  uint8_t out[size+3];
+  int i;
+
+  out[0]=cmd;//settup request command
+  out[1]=(uint8_t)(size>>8);
+  out[2]=(uint8_t)(0xFF&size);
+
+  for (i=0;i<size;i++){
+    out[3+i]=data[i];
+  }
+
+  HAL_UART_Transmit(&huart2, out,sizeof(out), 100);
+  
+  HAL_Delay(500);
+
+  return;
+
+
+
+}

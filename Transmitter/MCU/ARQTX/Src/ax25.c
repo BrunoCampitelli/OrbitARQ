@@ -23,6 +23,7 @@
 #include "stm32f4xx_hal.h"
 // #include "services.h"
 #include "scrambler.h"
+#include "pymem.h" // for debug purposes
 
 #undef __FILE_ID__
 #define __FILE_ID__ 669
@@ -84,7 +85,7 @@ ax25_create_addr_field (uint8_t *out, const uint8_t  *dest_addr,
   //*out++ = ((0b1111 & dest_ssid) << 1) | 0b01100000;
 
   for (i = 0; i < strnlen (src_addr, AX25_CALLSIGN_MAX_LEN); i++) {
-    *out++ = dest_addr[i] << 1;
+    *out++ = src_addr[i] << 1;
   }
   for (; i < AX25_CALLSIGN_MAX_LEN; i++) {
     *out++ = ' ' << 1;
@@ -93,7 +94,7 @@ ax25_create_addr_field (uint8_t *out, const uint8_t  *dest_addr,
    * the trailing bit is set to 1.
    */
   /* FIXME: C bit is set to 0 implicitly */
-  *out++ = ((0x0F & dest_ssid) << 1) | 0x61;
+  *out++ = ((0x0F & src_ssid) << 1) | 0x61;
   //*out++ = ((0b1111 & dest_ssid) << 1) | 0b01100001;
   return (size_t) AX25_MIN_ADDR_LEN;
 }
@@ -382,6 +383,10 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
 				     (const uint8_t *) __UPSAT_CALLSIGN,
 				     __UPSAT_SSID);
 
+  py_cmd('w', "addr_field", sizeof("addr_field"));
+  py_cmd('b', addr_buf,addr_len);
+  HAL_Delay(100);
+
   /*
    * Prepare address and payload into one frame placing the result in
    * an intermediate buffer
@@ -392,16 +397,28 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
     return -1;
   }
 
+  py_cmd('w', "frame", sizeof("frame"));
+  py_cmd('b', interm_send_buf, interm_len);
+  HAL_Delay(100);
+
   status = ax25_bit_stuffing(tmp_bit_buf, &ret_len, interm_send_buf, interm_len);
   if( status != AX25_ENC_OK){
     return -1;
   }
 
+  py_cmd('w', "stuffed", sizeof("stuffed"));
+  py_cmd('b', tmp_bit_buf, ret_len);
+  HAL_Delay(100);
+
   /* Pack now the bits into full bytes */
-  memset(interm_send_buf, 0, sizeof(interm_send_buf));
+  memset(interm_send_buf, 0, interm_len);
   for (i = 0; i < ret_len; i++) {
     interm_send_buf[i/8] |= tmp_bit_buf[i] << (i % 8);
   }
+
+  py_cmd('w', "packed", sizeof("packed"));
+  py_cmd('b', interm_send_buf, interm_len);
+  HAL_Delay(100);
 
   /*Perhaps some padding is needed due to bit stuffing */
   if(ret_len % 8){
@@ -415,6 +432,10 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
   scrambler_reset(&h_scrabler);
   scramble_data_nrzi(&h_scrabler, out, interm_send_buf,
 		     ret_len/8);
+
+  py_cmd('w', "scramnled", sizeof("scramnled"));
+  py_cmd('b', interm_send_buf, interm_len);
+  HAL_Delay(100);
 
   /* AX.25 sends LS bit first*/
   for(i = 0; i < ret_len/8; i++){
