@@ -121,9 +121,6 @@ make functions to send commands through uart, params command, payload and size
 make it so you can title each output and then display output in binary
 make it a single run script, end it with a done command
 
-to test:
-ax25_create_addr_field
-ax25_prepare_frame
 */
   py_cmd('w',"boyouu",sizeof("boyouu"));
   ax25_send(outbuff, payload,sizeof(payload),1);
