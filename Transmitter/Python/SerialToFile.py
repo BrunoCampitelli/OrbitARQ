@@ -5,8 +5,8 @@
 import serial
 
 memfile="serout.txt" #change the file being used here
-#st = serial.Serial('COM3',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
-st = serial.Serial('/dev/ttyACM0',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
+st = serial.Serial('COM4',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
+# st = serial.Serial('/dev/ttyACM0',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
 open(memfile, 'w').close()
 txtmem=open(memfile,"w")
 # print("preparing to read file")
@@ -75,6 +75,13 @@ while 1:
         print("exiting")
         txtmem.close()
         exit()
+
+    elif(cmd=='p'):
+        print("print received")
+        size=st.read(2)
+        size=size[0]*256+size[1]
+        cmd=st.read(size)
+        print(cmd)
 
     else:
         print("error")

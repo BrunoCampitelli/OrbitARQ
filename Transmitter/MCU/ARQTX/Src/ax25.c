@@ -20,6 +20,7 @@
 #include "ax25.h"
 // #include "log.h"
 #include <string.h>
+#include <math.h>
 #include "stm32f4xx_hal.h"
 // #include "services.h"
 #include "scrambler.h"
@@ -178,34 +179,50 @@ ax25_encode_status_t
 ax25_bit_stuffing (uint8_t *out, size_t *out_len, const uint8_t *buffer,
 		   const size_t buffer_len)
 {
-  uint8_t bit;
-  uint8_t shift_reg = 0x0;
   size_t out_idx = 0;
-  size_t i;
+  int i; //keeps track of buffer bits
+  size_t one_count=0; //counts amount of consecutive 1's
+  int j; //keeps track of out bits
+
+  memset(out, 0, buffer_len+33);//reset output buffer before starting
 
   /* Leading FLAG field does not need bit stuffing */
   for(i = 0; i < AX25_PREAMBLE_LEN; i++){
-    memcpy (out + out_idx, AX25_SYNC_FLAG_MAP_BIN, 8);
-    out_idx += 8;
+    memset (out+out_idx, AX25_SYNC_FLAG, 1);
+    out_idx ++;
   }
 
   /* Skip the AX.25 preamble and postable */
   buffer += AX25_PREAMBLE_LEN;
-  for (i = 0; i < 8 * (buffer_len - AX25_PREAMBLE_LEN - AX25_POSTAMBLE_LEN); i++) {
-    bit = (buffer[i / 8] >> (i % 8)) & 0x1;
-    shift_reg = (shift_reg << 1) | bit;
-    out[out_idx++] = bit;
-    /* Check if bit stuffing should be applied */
-    if((shift_reg & 0x1F) == 0x1F){
-      out[out_idx++] = 0;
-      shift_reg = 0x0;
+  out += AX25_PREAMBLE_LEN;
+
+  for (i = 0,j=0; i < 8 * (buffer_len - AX25_PREAMBLE_LEN - AX25_POSTAMBLE_LEN); i++,j++) {
+  
+    if( ( buffer[i/8] >> (7 - (i%8) ) ) & 1){//check if buffer bit is a 1 starting from the left
+
+      out[j/8] |= (1 << ( 7 - (j % 8) ) ); //writes 1 to current bit
+
+      one_count++;
+      if(one_count>4){
+        j++; //if that was the 5th 1 written, increment current bit 
+        one_count=0;
+      }
+
     }
+
+    else{
+      one_count=0;
+    }
+
+
   }
 
+  out-= AX25_PREAMBLE_LEN; //set the output back so the postable is written correctly
+  out_idx+=buffer_len - AX25_PREAMBLE_LEN - AX25_POSTAMBLE_LEN+ceil((double)(j-i)/8);
   /*Postamble does not need bit stuffing */
   for(i = 0; i < AX25_POSTAMBLE_LEN; i++){
-    memcpy (out + out_idx, AX25_SYNC_FLAG_MAP_BIN, 8);
-    out_idx += 8;
+    memset (out + out_idx, AX25_SYNC_FLAG, 1);
+    out_idx ++;
   }
 
   *out_len = out_idx;
@@ -406,25 +423,24 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
     return -1;
   }
 
-  // py_cmd('w', "stuffed", sizeof("stuffed"));
-  // py_cmd('b', tmp_bit_buf, ret_len);
-  // HAL_Delay(100);
+  py_cmd('w', "stuffed", sizeof("stuffed"));
+  py_cmd('b', tmp_bit_buf, ret_len);
 
   /* Pack now the bits into full bytes */
-  memset(interm_send_buf, 0, interm_len);
-  for (i = 0; i < ret_len; i++) {
-    interm_send_buf[i/8] |= tmp_bit_buf[i] << (i % 8);
-  }
+  // memset(interm_send_buf, 0, interm_len);
+  // for (i = 0; i < ret_len; i++) {
+  //   interm_send_buf[i/8] |= tmp_bit_buf[i] << (i % 8);
+  // }
 
-  py_cmd('w', "packed", sizeof("packed"));
-  py_cmd('b', interm_send_buf, interm_len);
-  HAL_Delay(100);
+  // py_cmd('w', "packed", sizeof("packed"));
+  // py_cmd('b', interm_send_buf, interm_len);
+  // HAL_Delay(100);
 
   /*Perhaps some padding is needed due to bit stuffing */
-  if(ret_len % 8){
-    pad_bits = 8 - (ret_len % 8);
-  }
-  ret_len += pad_bits;
+  // if(ret_len % 8){
+  //   pad_bits = 8 - (ret_len % 8);
+  // }
+  // ret_len += pad_bits;
 
   /* Perform NRZI and scrambling based on the G3RUH polynomial */
   scrambler_init (&h_scrabler, __SCRAMBLER_POLY, __SCRAMBLER_SEED,

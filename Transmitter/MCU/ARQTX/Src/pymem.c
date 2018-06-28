@@ -104,7 +104,7 @@ void py_cmd(char cmd, uint8_t *data, int size){
 
   HAL_UART_Transmit(&huart2, out,sizeof(out), 100);
   
-  HAL_Delay(500);
+  HAL_Delay(100);
 
   return;
 

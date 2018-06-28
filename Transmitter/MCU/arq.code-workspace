@@ -1,10 +1,10 @@
 {
 	"folders": [
 		{
-			"path": "Transmitter\\MCU\\ARQTX"
+			"path": "ARQTX"
 		},
 		{
-			"path": "Transmitter\\Python"
+			"path": "C:\\Users\\Bruno\\Desktop\\docs\\ARQ\\Transmitter\\Python"
 		}
 	],
 	"settings": {
@@ -13,6 +13,11 @@
 			"PLATFORMIO_CALLER": "vscode"
 		},
 		"files.associations": {
+			"main.h": "c",
+			"stm32f4xx_hal.h": "c",
+			"scrambler.h": "c",
+			"lfsr.h": "c",
+			"stdint.h": "c",
 			"ax25.h": "c"
 		}
 	}

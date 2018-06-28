@@ -7,5 +7,6 @@
     "terminal.integrated.env.linux": {
         "PATH": "/home/bruno/.platformio/penv/bin:/home/bruno/.platformio/penv:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
         "PLATFORMIO_CALLER": "vscode"
-    }
+    },
+    "python.pythonPath": "D:\\Users\\Bruno\\AppData\\Local\\Programs\\Python\\Python36\\python.exe"
 }
