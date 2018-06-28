@@ -6,7 +6,7 @@ import serial
 
 memfile="serout.txt" #change the file being used here
 #st = serial.Serial('COM3',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
-st = serial.Serial('COM3',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
+st = serial.Serial('/dev/ttyACM0',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
 open(memfile, 'w').close()
 txtmem=open(memfile,"w")
 # print("preparing to read file")
@@ -24,13 +24,17 @@ while 1:
     print("waiting for command")
     st.reset_input_buffer()
     cmd=st.read(1)
+    cmd=cmd.decode('utf-8')
 
     if(cmd=='w'):
         print("write received")
         size=st.read(2)
-        size=ord(size[0])*256+ord(size[1])
+        # size=size.decode('utf-8')
+        # size=ord(size[0])*256+ord(size[1])
+        size=size[0]*256+size[1]
         print(size)
         cmd=st.read(size)
+        cmd=cmd.decode('utf-8')
         print(cmd)
         
         txtmem.write(cmd)
@@ -39,7 +43,9 @@ while 1:
     elif(cmd=='b'):
         print("binary received")
         size=st.read(2)#wait for command
-        size=ord(size[0])*256+ord(size[1])
+        # size=size.decode('utf-8')
+        # size=ord(size[0])*256+ord(size[1])
+        size=size[0]*256+size[1]
         print(size)
         ser=st.read(size)
         ser=list(ser)
@@ -48,7 +54,8 @@ while 1:
             binout.append('')
 
         for n in range(0,size):
-            ser[n]=ord(ser[n])
+            # ser[n]=ser[n].decode('utf-8')
+            # ser[n]=ord(ser[n])
             hexout[n]=hex(ser[n])
             binout[n]='{0:08b}'.format(ser[n])
         
@@ -68,6 +75,10 @@ while 1:
         print("exiting")
         txtmem.close()
         exit()
+
+    else:
+        print("error")
+        print(cmd)
 
     # if (cmd[0]=='r'):
     #     print("read received")

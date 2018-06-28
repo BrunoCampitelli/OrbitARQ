@@ -406,9 +406,9 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
     return -1;
   }
 
-  py_cmd('w', "stuffed", sizeof("stuffed"));
-  py_cmd('b', tmp_bit_buf, ret_len);
-  HAL_Delay(100);
+  // py_cmd('w', "stuffed", sizeof("stuffed"));
+  // py_cmd('b', tmp_bit_buf, ret_len);
+  // HAL_Delay(100);
 
   /* Pack now the bits into full bytes */
   memset(interm_send_buf, 0, interm_len);
