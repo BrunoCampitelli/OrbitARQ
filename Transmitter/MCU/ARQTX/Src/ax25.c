@@ -216,6 +216,7 @@ ax25_bit_stuffing (uint8_t *out, size_t *out_len, const uint8_t *buffer,
   int i; //keeps track of buffer bits
   size_t one_count=0; //counts amount of consecutive 1's
   int j; //keeps track of out bits
+  uint8_t done=0; //whether bit stuffing is done
 
   memset(out, 0, buffer_len+33);//reset output buffer before starting
 
@@ -229,14 +230,14 @@ ax25_bit_stuffing (uint8_t *out, size_t *out_len, const uint8_t *buffer,
   buffer += AX25_PREAMBLE_LEN;
   out += AX25_PREAMBLE_LEN;
 
-  for (i = 0,j=0; i < 8 * (buffer_len - AX25_PREAMBLE_LEN - AX25_POSTAMBLE_LEN); i++,j++) {
+  for (i = 0,j=0; i < 8 * (buffer_len - AX25_PREAMBLE_LEN); i++,j++) {
   
     if( ( buffer[i/8] >> (7 - (i%8) ) ) & 1){//check if buffer bit is a 1 starting from the left
 
       out[j/8] |= (1 << ( 7 - (j % 8) ) ); //writes 1 to current bit
 
       one_count++;
-      if(one_count>4){
+      if(one_count>4&&!done){
         j++; //if that was the 5th 1 written, increment current bit 
         one_count=0;
       }
@@ -247,16 +248,19 @@ ax25_bit_stuffing (uint8_t *out, size_t *out_len, const uint8_t *buffer,
       one_count=0;
     }
 
+    if(i>8*(buffer_len-AX25_PREAMBLE_LEN-AX25_POSTAMBLE_LEN)) done=1;
+
 
   }
 
   out-= AX25_PREAMBLE_LEN; //set the output back so the postable is written correctly
   out_idx+=buffer_len - AX25_PREAMBLE_LEN - AX25_POSTAMBLE_LEN+ceil((double)(j-i)/8);
   /*Postamble does not need bit stuffing */
-  for(i = 0; i < AX25_POSTAMBLE_LEN; i++){
-    memset (out + out_idx, AX25_SYNC_FLAG, 1);
-    out_idx ++;
-  }
+  // for(i = 0; i < AX25_POSTAMBLE_LEN; i++){
+  //   memset (out + out_idx, AX25_SYNC_FLAG, 1);
+  //   out_idx ++;
+  // }
+  out_idx+=AX25_POSTAMBLE_LEN;
 
   *out_len = out_idx;
   return AX25_ENC_OK;
@@ -489,17 +493,17 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
   scrambler_init (&h_scrabler, __SCRAMBLER_POLY, __SCRAMBLER_SEED,
 		  __SCRAMBLER_ORDER);
   scrambler_reset(&h_scrabler);
-  scramble_data_nrzi(&h_scrabler, out, interm_send_buf,
-		     ret_len/8);
+  scramble_data_nrzi(&h_scrabler, out, tmp_bit_buf,
+		     ret_len);
 
   #if DEBUG
-  py_cmd('w', "scramnled", sizeof("scramnled"));
-  py_cmd('b', interm_send_buf, interm_len);
+  py_cmd('w', "scrambled", sizeof("scramnled"));
+  py_cmd('b', out, ret_len);
   #endif
 
 
 
-  return ret_len/8;
+  return ret_len;
 }
 
 /**

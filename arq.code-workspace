@@ -17,7 +17,8 @@
 			"PLATFORMIO_CALLER": "vscode"
 		},
 		"files.associations": {
-			"main.h": "c"
+			"main.h": "c",
+			"stm32f4xx_hal.h": "c"
 		}
 	}
 }

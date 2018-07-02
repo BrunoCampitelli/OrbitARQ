@@ -123,7 +123,7 @@ bit reverse
   #if DEBUG
   py_cmd('p',"debug mode",sizeof("debug mode"));
   #endif
-  ax25_send(outbuff, payload,sizeof(payload),1);
+  ax25_send(outbuff, payload,sizeof(payload)-1,1);
   py_cmd('d',1,1);
   // size[0]=sizeof(outbuff);
   // HAL_UART_Transmit(&huart2,size,1,100);
