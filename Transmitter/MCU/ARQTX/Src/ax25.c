@@ -18,6 +18,7 @@
  */
 
 #include "ax25.h"
+#include "main.h"
 // #include "log.h"
 #include <string.h>
 #include <math.h>
@@ -45,13 +46,30 @@ scrambler_handle_t h_scrabler;
  * @return the FCS of the buffer
  */
 uint16_t
-ax25_fcs (uint8_t *buffer, size_t len)
+ax25_fcs (uint8_t *message, size_t len)
 {
-  uint16_t fcs = 0xFFFF;
-  while (len--) {
-    fcs = (fcs >> 8) ^ crc16_ccitt_table_reverse[(fcs ^ *buffer++) & 0xFF];
-  }
-  return fcs ^ 0xFFFF;
+    uint8_t data;
+    uint16_t retmainder = 0xFFFF;
+      /*
+     * Divide the message by the polynomial, a byte at a time.
+     */
+    for (int byte = 0; byte < len; ++byte)
+    {
+        data = message[byte] ^ (retmainder >> (8));
+        retmainder = crc16_ccitt_table[data] ^ (retmainder << 8);
+    }
+
+    /*
+     * The final remainder is the CRC.
+     */
+    return (retmainder);
+
+
+  // uint16_t fcs = 0xFFFF;
+  // while (len--) {
+  //   fcs = (fcs >> 8) ^ crc16_ccitt_table_reverse[(fcs ^ *buffer++) & 0xFF];
+  // }
+  // return fcs ^ 0xFFFF;
 }
 
 
@@ -145,12 +163,27 @@ ax25_prepare_frame (uint8_t *out, const uint8_t *info, size_t info_len,
   memcpy (out + i, info, info_len);
   i += info_len;
 
+  #if DEBUG
+    py_cmd('w', "original message", sizeof("original message"));
+    py_cmd('b', out+AX25_PREAMBLE_LEN, i-AX25_POSTAMBLE_LEN);
+  #endif
+
+      /* AX.25 sends LS bit first, except crc*/
+  for(uint8_t j = AX25_PREAMBLE_LEN; j < i; j++){
+    out[j] = reverse_byte(out[j]);
+  }
+
+  #if DEBUG
+    py_cmd('w', "reversed", sizeof("reversed"));
+    py_cmd('b', out, i);
+  #endif
+
   /* Compute the FCS. Ignore the AX.25 preamble */
   fcs = ax25_fcs (out + AX25_PREAMBLE_LEN, i - AX25_PREAMBLE_LEN);
 
   /* The MS bits are sent first ONLY at the FCS field */
-  out[i++] = fcs & 0xFF;
   out[i++] = (fcs >> 8) & 0xFF;
+  out[i++] = fcs & 0xFF;
 
   /* Append the AX.25 postample*/
   memset(out+i, AX25_SYNC_FLAG, AX25_POSTAMBLE_LEN);
@@ -374,7 +407,13 @@ ax25_decode (ax25_handle_t *h, uint8_t *out, size_t *out_len,
  * transmitting routing should sent the bits MS bit first. This is performed
  * for user convenient due to the fact that most teleccomunication systems
  * send the MS first.
- *
+ * 
+ * TODO: CHANGE ORDER
+ * TAKE MESSAGE
+ * INVERT BYTES
+ * ADD CRC
+ * BIT STUFFING
+ * 
  * @param out the output buffer that will hold the encoded data
  * @param in the input data containing the payload
  * @param len the length of the input data
@@ -389,8 +428,8 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
   size_t addr_len = 0;
   size_t interm_len;
   size_t ret_len;
-  size_t i;
-  size_t pad_bits = 0;
+  // size_t i;
+  // size_t pad_bits = 0;
   uint8_t dest_ssid = is_wod ? __UPSAT_DEST_SSID_WOD :__UPSAT_DEST_SSID;
 
   /* Create the address field */
@@ -400,9 +439,10 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
 				     (const uint8_t *) __UPSAT_CALLSIGN,
 				     __UPSAT_SSID);
 
+  #if DEBUG
   py_cmd('w', "addr_field", sizeof("addr_field"));
   py_cmd('b', addr_buf,addr_len);
-  HAL_Delay(100);
+  #endif
 
   /*
    * Prepare address and payload into one frame placing the result in
@@ -414,17 +454,20 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
     return -1;
   }
 
+  #if DEBUG
   py_cmd('w', "frame", sizeof("frame"));
   py_cmd('b', interm_send_buf, interm_len);
-  HAL_Delay(100);
+  #endif
 
   status = ax25_bit_stuffing(tmp_bit_buf, &ret_len, interm_send_buf, interm_len);
   if( status != AX25_ENC_OK){
     return -1;
   }
 
+  #if DEBUG
   py_cmd('w', "stuffed", sizeof("stuffed"));
   py_cmd('b', tmp_bit_buf, ret_len);
+  #endif
 
   /* Pack now the bits into full bytes */
   // memset(interm_send_buf, 0, interm_len);
@@ -449,14 +492,12 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
   scramble_data_nrzi(&h_scrabler, out, interm_send_buf,
 		     ret_len/8);
 
+  #if DEBUG
   py_cmd('w', "scramnled", sizeof("scramnled"));
   py_cmd('b', interm_send_buf, interm_len);
-  HAL_Delay(100);
+  #endif
 
-  /* AX.25 sends LS bit first*/
-  for(i = 0; i < ret_len/8; i++){
-    out[i] = reverse_byte(out[i]);
-  }
+
 
   return ret_len/8;
 }

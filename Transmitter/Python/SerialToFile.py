@@ -3,6 +3,7 @@
 # d=done
 
 import serial
+import datetime
 
 memfile="serout.txt" #change the file being used here
 st = serial.Serial('COM4',115200, timeout=None,parity=serial.PARITY_NONE, rtscts=0)
@@ -15,6 +16,7 @@ txtmem=open(memfile,"w")
 # memory=list(rom.read())
 # rom.close()
 # print("file read")
+now=datetime.timedelta(datetime.time().microsecond)
 
 hexout=[]
 binout=[]
@@ -22,8 +24,11 @@ binout=[]
 
 while 1:
     print("waiting for command")
+
+    print(datetime.timedelta(datetime.time().microsecond).microseconds-now.microseconds)
     st.reset_input_buffer()
     cmd=st.read(1)
+    now=datetime.timedelta(datetime.time().microsecond)
     cmd=cmd.decode('utf-8')
 
     if(cmd=='w'):

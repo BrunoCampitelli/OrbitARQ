@@ -15,6 +15,9 @@
 		"terminal.integrated.env.linux": {
 			"PATH": "/home/bruno/.platformio/penv/bin:/home/bruno/.platformio/penv:/home/bruno/.local/bin:/home/bruno/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
 			"PLATFORMIO_CALLER": "vscode"
+		},
+		"files.associations": {
+			"main.h": "c"
 		}
 	}
 }

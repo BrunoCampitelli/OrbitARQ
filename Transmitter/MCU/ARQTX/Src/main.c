@@ -115,14 +115,14 @@ int main(void)
 
 /*
 TODO:
-Check output of each ax25_send steps
-This can be done in a python script.
-make functions to send commands through uart, params command, payload and size
-make it so you can title each output and then display output in binary
-make it a single run script, end it with a done command
+crc
+nzri
+bit reverse
 
 */
-  py_cmd('w',"boyouu",sizeof("boyouu"));
+  #if DEBUG
+  py_cmd('p',"debug mode",sizeof("debug mode"));
+  #endif
   ax25_send(outbuff, payload,sizeof(payload),1);
   py_cmd('d',1,1);
   // size[0]=sizeof(outbuff);
