@@ -40,9 +40,6 @@
 #include "string.h"
 // #include "pymem.h"
 #include "ax25.h"
-#if CDEV
-  #include "cdevlog.h"
-#endif
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -112,7 +109,10 @@ int main(void)
   // MX_USART2_UART_Init();
   // MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+#if CDEV
+  printf("start\n");
+  creat_file();
+#endif
 /*
 TODO:
 crc
@@ -124,11 +124,13 @@ bit reverse
 py_cmd('p',"debug mode",sizeof("debug mode"));
 #endif
 
-  // ax25_send(outbuff, payload,sizeof(payload)-1,1);
-printf("start");
-// creat_file();
-// print_file("Debug test");
-
+  ax25_send(outbuff, payload,sizeof(payload)-1,1);
+  #if CDEV
+    print_file("TEST");
+    data_file("ABC123");
+    print_file("DEBTEST");
+    printf("end");
+  #endif
 //   py_cmd('d',1,1);
   // size[0]=sizeof(outbuff);
   // HAL_UART_Transmit(&huart2,size,1,100);
@@ -146,8 +148,8 @@ printf("start");
   // printf("hello world");
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  // while (1)
+  // {
 
   /* USER CODE END WHILE */
   //HAL_UART_Receive(&huart2, num, sizeof(num), 100000);
@@ -155,7 +157,7 @@ printf("start");
 //  HAL_UART_Transmit(&huart2, out,sizeof(num), 100);
   /* USER CODE BEGIN 3 */
 
-   }
+  //  }
   /* USER CODE END 3 */
 
 }

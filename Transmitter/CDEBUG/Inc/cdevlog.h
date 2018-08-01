@@ -1,7 +1,7 @@
 #ifndef __CDEVLOG
 #define __CDEVLOG
 
-#define FILE_PATH "../clog.txt"
+#define FILE_PATH "./clog.txt"
 
 #include <stdio.h>
 #include <stdint.h>

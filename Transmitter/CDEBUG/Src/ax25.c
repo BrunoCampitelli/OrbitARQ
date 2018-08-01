@@ -449,6 +449,10 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
   py_cmd('w', "addr_field", sizeof("addr_field"));
   py_cmd('b', addr_buf,addr_len);
   #endif
+  #if CDEV
+    print_file("addr_field");
+    data_file(addr_buf);
+  #endif
 
   /*
    * Prepare address and payload into one frame placing the result in
@@ -461,8 +465,13 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
   }
 
   #if DEBUG
-  py_cmd('w', "frame", sizeof("frame"));
-  py_cmd('b', interm_send_buf, interm_len);
+    py_cmd('w', "frame", sizeof("frame"));
+    py_cmd('b', interm_send_buf, interm_len);
+  #endif
+
+  #if CDEV
+    print_file("frame");
+    data_file(interm_send_buf);
   #endif
 
   status = ax25_bit_stuffing(tmp_bit_buf, &ret_len, interm_send_buf, interm_len);
@@ -471,8 +480,12 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
   }
 
   #if DEBUG
-  py_cmd('w', "stuffed", sizeof("stuffed"));
-  py_cmd('b', tmp_bit_buf, ret_len);
+    py_cmd('w', "stuffed", sizeof("stuffed"));
+    py_cmd('b', tmp_bit_buf, ret_len);
+  #endif
+  #if CDEV
+    print_file("stuffed");
+    data_file(tmp_bit_buf);
   #endif
 
   /* Pack now the bits into full bytes */
@@ -500,8 +513,12 @@ ax25_send(uint8_t *out, const uint8_t *in, size_t len, uint8_t is_wod)
 		     ret_len);
 
   #if DEBUG
-  py_cmd('w', "scrambled", sizeof("scramnled"));
-  py_cmd('b', out, ret_len);
+    py_cmd('w', "scrambled", sizeof("scramnled"));
+    py_cmd('b', out, ret_len);
+  #endif
+  #if CDEV
+    print_file("scrambled");
+    data_file(out);
   #endif
 
 
